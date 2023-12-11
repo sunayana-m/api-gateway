@@ -44,8 +44,8 @@ public class OAuthFilter extends ZuulFilter {
         String authorizationHeader = context.getRequest().getHeader("authorization");
         String authorizedQueryParam = context.getRequest().getParameter("authorized");
         if (authorizedQueryParam == null || authorizedQueryParam.equals("false")) {
-            context.setSendZuulResponse(true);
             context.addZuulRequestHeader("Authorization", authorizationHeader);
+            context.setSendZuulResponse(true);
         } else if (authorizedQueryParam.equals("true")) {
             boolean isTokenValid = feign.validateCustomAccessToken(authorizationHeader);
             if (isTokenValid) {
