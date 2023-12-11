@@ -10,8 +10,13 @@ import com.netflix.zuul.context.RequestContext;
 import com.netflix.zuul.exception.ZuulException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.CrossOrigin;
 
+import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
+
+@Component
 @CrossOrigin
 public class OAuthFilter extends ZuulFilter {
 
@@ -36,37 +41,22 @@ public class OAuthFilter extends ZuulFilter {
     @Override
     public Object run() throws ZuulException {
         RequestContext context = RequestContext.getCurrentContext();
-        String requestURI = context.getRequest().getRequestURI();
-
-//        String authorizedQueryParam = context.getRequest().getParameter("authorized");
-//        if (authorizedQueryParam == null || authorizedQueryParam.equals("false")) {
-//            context.setSendZuulResponse(true);
-//        } else if (authorizedQueryParam.equals("true")) {
         String authorizationHeader = context.getRequest().getHeader("authorization");
-        User user = feign.isTokenValid(authorizationHeader);
-        System.out.println("Theeeeeeee      " + user);
-        if (user != null) {
+        String authorizedQueryParam = context.getRequest().getParameter("authorized");
+        if (authorizedQueryParam == null || authorizedQueryParam.equals("false")) {
             context.setSendZuulResponse(true);
-            if ("/login".equals(requestURI)) {
+            context.addZuulRequestHeader("Authorization", authorizationHeader);
+        } else if (authorizedQueryParam.equals("true")) {
+            boolean isTokenValid = feign.validateCustomAccessToken(authorizationHeader);
+            if (isTokenValid) {
+                context.setSendZuulResponse(true);
+            } else {
                 context.setSendZuulResponse(false);
-                context.getResponse().setHeader("Content-Type", "application/json");
-                context.getResponse().setCharacterEncoding("UTF-8");
-                ObjectMapper objectMapper = new ObjectMapper();
-                try {
-                    String userJson = objectMapper.writeValueAsString(user);
-                    context.setResponseBody(userJson);
-                } catch (JsonProcessingException e) {
-                    // Handle exception if JSON serialization fails
-                    e.printStackTrace();
-                }
+                context.setResponseStatusCode(401);
+                context.setResponseBody("token Expired Login in again");
             }
-        } else {
-            context.setSendZuulResponse(false);
-            context.setResponseStatusCode(401);
-            context.setResponseBody("token Expired Login in again");
         }
         return null;
-
     }
 }
 

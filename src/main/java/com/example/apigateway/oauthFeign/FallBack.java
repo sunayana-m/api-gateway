@@ -12,7 +12,17 @@ public class FallBack implements FallbackFactory<FeignImpl> {
     public FeignImpl create(Throwable cause) {
         return new FeignImpl() {
             @Override
-            public User isTokenValid(String header) {
+            public User loginWithFireBase(String header) {
+                return null;
+            }
+
+            @Override
+            public Boolean validateCustomAccessToken(String authorization) {
+                return false;
+            }
+
+            @Override
+            public User getUserWithCustomAccessToken(String authorization) {
                 return null;
             }
         };
