@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
+import java.util.HashSet;
 
 @Component
 @CrossOrigin
@@ -41,13 +42,17 @@ public class OAuthFilter extends ZuulFilter {
     @Override
     public Object run() throws ZuulException {
         RequestContext context = RequestContext.getCurrentContext();
-        String authorizationHeader = context.getRequest().getHeader("authorization");
+        String authorizationHeader = context.getRequest().getHeader("Authorization");
+        System.out.println("header" + authorizationHeader);
         String authorizedQueryParam = context.getRequest().getParameter("authorized");
+        System.out.println("Query param"+  authorizedQueryParam);
+        context.set("sensitiveHeaders", new HashSet<>());
         if (authorizedQueryParam == null || authorizedQueryParam.equals("false")) {
             context.addZuulRequestHeader("Authorization", authorizationHeader);
             context.setSendZuulResponse(true);
         } else if (authorizedQueryParam.equals("true")) {
             boolean isTokenValid = feign.validateCustomAccessToken(authorizationHeader);
+            System.out.println("is valid" + isTokenValid);
             if (isTokenValid) {
                 context.setSendZuulResponse(true);
             } else {
