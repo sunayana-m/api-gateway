@@ -47,6 +47,11 @@ public class OAuthFilter extends ZuulFilter {
         String authorizedQueryParam = context.getRequest().getParameter("authorized");
         System.out.println("Query param"+  authorizedQueryParam);
         context.set("sensitiveHeaders", new HashSet<>());
+//        if (context.getRequest().getRequestURI().equals("/user-details")) {
+//            // Allow the request to proceed without validation
+//            context.setSendZuulResponse(true);
+//            return null;
+//        }
         if (authorizedQueryParam == null || authorizedQueryParam.equals("false")) {
             context.addZuulRequestHeader("Authorization", authorizationHeader);
             context.setSendZuulResponse(true);
